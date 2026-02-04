@@ -4,7 +4,7 @@
 #include <pico/stdlib.h>
 #include <stdio.h>
 #include "hub75.h"
-#include "mountains_128x64_rgb565.h"
+#include "ecd1015.h"
 
 #define BUTTON_PIN 15
 
@@ -32,7 +32,7 @@ void main(void){
 
 void hub75_task(__unused void *params){
     hub75_configure();
-    hub75_load_image((uint16_t*)mountains);
+    hub75_load_image((uint16_t*)ecd1015);
 
     while(1){
         if(hub75_on){

@@ -16,7 +16,7 @@
 #define STROBE_PIN 12
 #define OEN_PIN 13
 
-#define WIDTH 128
+#define WIDTH 64
 #define HEIGHT 64
 
 // pio state machines
