@@ -1,10 +1,5 @@
-/**
- * Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
- *
- * SPDX-License-Identifier: BSD-3-Clause
- */
-
-#include <stdio.h>
+// Basic HUB75 driver, adapted from Pico example
+// https://github.com/raspberrypi/pico-examples/tree/master/pio/hub75
 
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
@@ -33,22 +28,12 @@ static PIO pio = pio0;
 static uint32_t data_prog_offs;
 static uint32_t row_prog_offs;
 
+static uint16_t *image;
+
 void hub75_configure();
+void hub75_load_image();
 void hub75_refresh();
 static inline uint32_t gamma_correct_565_888(uint16_t pix);
-
-// load image, should go in separate function later
-const uint16_t *image = (uint16_t *)mountains;
-
-void main(void){
-
-    stdio_init_all();
-    hub75_configure();
-
-    while(1){
-        hub75_refresh();
-    }
-}
 
 static inline uint32_t gamma_correct_565_888(uint16_t pix) {
     uint32_t r_gamma = pix & 0xf800u;
@@ -67,6 +52,10 @@ void hub75_configure(){
 
     hub75_data_rgb888_program_init(pio, DATA_SM, data_prog_offs, DATA_BASE_PIN, CLK_PIN);
     hub75_row_program_init(pio, ROW_SM, row_prog_offs, ROWSEL_BASE_PIN, ROWSEL_N_PINS, STROBE_PIN);
+}
+
+void hub75_load_image(uint16_t *image_pointer){
+    image = image_pointer;
 }
 
 void hub75_refresh(){
