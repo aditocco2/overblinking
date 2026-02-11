@@ -17,11 +17,15 @@
 #define SCLK 18
 #define MOSI 19
 
+#define BLOCK_SIZE 512
 #define TIMEOUT_MS 300
+
+// spi_read_blocking needs a pointer to dummy data so here it is
+static uint8_t high = 0xFF;
 
 _Bool sd_card_init();
 // _Bool sd_card_write_block(uint8_t *data, uint32_t block_num);
-// void sd_card_read_block(uint8_t *data, uint32_t block_num);
+_Bool sd_card_read_block(uint32_t block_addr, uint8_t* buffer, uint16_t buffer_size);
 
 static void send_cmd(uint8_t cmd, uint32_t arg, uint8_t crc);
 static uint8_t read_response();
@@ -34,12 +38,12 @@ static void send_cmd(uint8_t cmd, uint32_t arg, uint8_t crc){
     spi_write_blocking(spi0, buf, 6);
 }
 
-// keep going until we get a byte that isn't 0xFF
+// keep going until we get a byte whose error MSB isn't high
 static uint8_t read_response(){
 
     uint8_t response = 0xFF;
     absolute_time_t start_time = get_absolute_time();
-    while(response >= 0x80){
+    while(response >= 0x80){ // MSB high
         spi_read_blocking(spi0, 0xFF, &response, 1);
         absolute_time_t current_time = get_absolute_time();
         if(absolute_time_diff_us(start_time, current_time) >= 1000 * TIMEOUT_MS){
@@ -88,7 +92,6 @@ _Bool sd_card_init(){
     spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
     // hold CS high for at least 74 clock cycles to switch the card to native mode
-    uint8_t high = 0xFF;
     for(uint8_t i = 0; i < 10; i++){
         spi_write_blocking(spi0, &high, 1);
     }
@@ -127,6 +130,8 @@ _Bool sd_card_init(){
         send_cmd(55, 0, 0x65);
         // while(read_response() != 0x01);
         uint8_t response = read_response();
+
+        // I guess we don't actually need the response to be 0x01 :shrug:
         // if(response != 0x01){
         //     printf("did not respond to cmd55 (%d)\n", response);
         //     gpio_put(CS, 1);
@@ -153,4 +158,38 @@ _Bool sd_card_init(){
     spi_write_blocking(spi0, &high, 1);
 
     return true;
+}
+
+
+_Bool sd_card_read_block(uint32_t block_addr, uint8_t* buffer, uint16_t buffer_size){
+    
+    gpio_put(CS, 0);
+    
+    // send CMD17 single read block with the block address at the parameter
+    send_cmd(17, block_addr, 0x01);
+    if(read_response() != 0x00){
+        gpio_put(CS, 1);
+        return false;
+    }
+
+    uint8_t r_byte;
+
+    for(uint16_t i = 0; i < BLOCK_SIZE; i++){
+
+        spi_read_blocking(spi0, 0xFF, &r_byte, 1);
+
+        if(i < buffer_size){
+            buffer[i] = r_byte;
+        }
+    }
+        
+    spi_write_blocking(spi0, &high, 1);
+    spi_write_blocking(spi0, &high, 1);
+
+    gpio_put(CS, 1);
+
+    spi_write_blocking(spi0, &high, 1);
+
+    return true;
+
 }
