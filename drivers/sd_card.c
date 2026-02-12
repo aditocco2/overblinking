@@ -2,7 +2,7 @@
 // Adapted from Yaseen Twati's guide:
 // https://web.archive.org/web/20250324102712/http://yaseen.ly/writing-data-to-sdcards-without-a-filesystem-spi/
 
-// MAY OR MAY NOT WORK. STILL NEED TO READ DATA
+#include "sd_card.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -17,40 +17,50 @@
 #define SCLK 18
 #define MOSI 19
 
-#define BLOCK_SIZE 512
+#define DATA_RATE 20000000
 #define TIMEOUT_MS 300
 
-// spi_read_blocking needs a pointer to dummy data so here it is
-static uint8_t high = 0xFF;
+// spi commands need pointers to dummy data so here they are
+static const uint8_t high = 0xFF;
+static const uint8_t zero = 0x00;
+static uint8_t dummy;
 
 _Bool sd_card_init();
-// _Bool sd_card_write_block(uint8_t *data, uint32_t block_num);
-_Bool sd_card_read_block(uint32_t block_addr, uint8_t* buffer, uint16_t buffer_size);
+_Bool sd_card_write_block(uint32_t block_addr, const void *buffer, uint16_t buffer_size);
+_Bool sd_card_read_block(uint32_t block_addr, uint8_t *buffer, uint16_t buffer_size);
+_Bool sd_card_read_blocks(uint32_t block_addr, uint16_t num_blocks, uint8_t* buffer);
 
 static void send_cmd(uint8_t cmd, uint32_t arg, uint8_t crc);
 static uint8_t read_response();
 static _Bool wait_card_busy();
+static void send_dummy_byte();
+static void wait_for_data_start();
 
 static void send_cmd(uint8_t cmd, uint32_t arg, uint8_t crc){
+    wait_card_busy();
 
     uint8_t buf[6] = {0x40 | cmd, arg >> 24, arg >> 16, arg >> 8, arg, crc};
 
     spi_write_blocking(spi0, buf, 6);
 }
 
-// keep going until we get a byte whose error MSB isn't high
-static uint8_t read_response(){
+static void send_dummy_byte(){
+    spi_write_blocking(spi0, &high, 1);
+}
 
-    uint8_t response = 0xFF;
+// keep going until we get a byte that's not 0xFF (or timeout)
+static uint8_t read_response(){
     absolute_time_t start_time = get_absolute_time();
-    while(response >= 0x80){ // MSB high
+
+    uint8_t response;
+    do{
         spi_read_blocking(spi0, 0xFF, &response, 1);
         absolute_time_t current_time = get_absolute_time();
         if(absolute_time_diff_us(start_time, current_time) >= 1000 * TIMEOUT_MS){
             printf("Timeout\n");
             break;
         }
-    }
+    } while(response == 0xFF);
 
     return response;
 }
@@ -73,10 +83,20 @@ static _Bool wait_card_busy(){
     }
 }
 
-// initialize card, assuming V2
-_Bool sd_card_init(){
+static void wait_for_data_start(){
+    uint8_t r_byte = 0xFF;
+    while(r_byte != 0xFE){
+        spi_read_blocking(spi0, 0xFF, &r_byte, 1);
+    }
+}
 
-    sleep_us(300);
+// initialize card, assuming V2
+// sequence:
+// CMD0 -> 0x01
+// CMD8 -> 0x01
+// CMD55
+// CMD41 -> 0x00
+_Bool sd_card_init(){
     
     gpio_init(CS);
     gpio_set_dir(CS, GPIO_OUT);
@@ -88,12 +108,12 @@ _Bool sd_card_init(){
     gpio_pull_up(MISO);
 
     // must be <400KHz during init
-    spi_init(spi0, 50000);
+    spi_init(spi0, 250000);
     spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
     // hold CS high for at least 74 clock cycles to switch the card to native mode
     for(uint8_t i = 0; i < 10; i++){
-        spi_write_blocking(spi0, &high, 1);
+        send_dummy_byte();
     }
     gpio_put(CS, 0);
 
@@ -106,7 +126,7 @@ _Bool sd_card_init(){
     }
 
     gpio_put(CS, 1);
-    spi_write_blocking(spi0, &high, 1);
+    send_dummy_byte();
     gpio_put(CS, 0);
 
     // verify V2 with CMD8
@@ -118,34 +138,24 @@ _Bool sd_card_init(){
     }
 
     gpio_put(CS, 1);
-    spi_write_blocking(spi0, &high, 1);    
+    send_dummy_byte();   
 
     // high capacity mode may take a few tries
     for(uint8_t i = 0; i < 100; i++){
 
         gpio_put(CS, 0);
-        spi_write_blocking(spi0, &high, 1);
+        send_dummy_byte();
 
         // inform the card next command is an ACMD
         send_cmd(55, 0, 0x65);
-        // while(read_response() != 0x01);
-        uint8_t response = read_response();
 
-        // I guess we don't actually need the response to be 0x01 :shrug:
-        // if(response != 0x01){
-        //     printf("did not respond to cmd55 (%d)\n", response);
-        //     gpio_put(CS, 1);
-        //     return false;
-        // }
-
-        // dummy byte???
-        spi_write_blocking(spi0, &high, 1);
-
+        for(uint8_t d = 0; d < 4; d++){
+            send_dummy_byte(); 
+        }
+            
         // set high capacity mode, if we get 0 it was successful
         send_cmd(41, 0x40000000, 0x77);
-        response = read_response();
-        printf("cmd41 (%x)\n", response);
-        if(response == 0x00){
+        if(read_response() == 0x00){
             break;
         }
 
@@ -155,14 +165,16 @@ _Bool sd_card_init(){
     gpio_put(CS, 1);
 
     // extra dummy byte
-    spi_write_blocking(spi0, &high, 1);
+    send_dummy_byte();
+
+    // now that init is over, we can up the bitrate
+    spi_set_baudrate(spi0, DATA_RATE);
 
     return true;
 }
 
+_Bool sd_card_read_block(uint32_t block_addr, uint8_t *buffer, uint16_t buffer_size){
 
-_Bool sd_card_read_block(uint32_t block_addr, uint8_t* buffer, uint16_t buffer_size){
-    
     gpio_put(CS, 0);
     
     // send CMD17 single read block with the block address at the parameter
@@ -172,24 +184,85 @@ _Bool sd_card_read_block(uint32_t block_addr, uint8_t* buffer, uint16_t buffer_s
         return false;
     }
 
-    uint8_t r_byte;
+    wait_for_data_start();
 
-    for(uint16_t i = 0; i < BLOCK_SIZE; i++){
+    // read the data into the buffer
+    // should replace with dma implementation eventually
+    spi_read_blocking(spi0, 0xFF, buffer, buffer_size);
 
-        spi_read_blocking(spi0, 0xFF, &r_byte, 1);
-
-        if(i < buffer_size){
-            buffer[i] = r_byte;
-        }
+    // must read the entire 512 byte block, so flush out dummy data
+    for(uint16_t i = buffer_size; i < BLOCK_SIZE; i++){
+        spi_read_blocking(spi0, 0xFF, &dummy, buffer_size);
     }
-        
-    spi_write_blocking(spi0, &high, 1);
-    spi_write_blocking(spi0, &high, 1);
+
+    // crc would usually go here in the form of two reads
+    spi_write_read_blocking(spi0, &high, &dummy, 2);
 
     gpio_put(CS, 1);
-
-    spi_write_blocking(spi0, &high, 1);
-
+    send_dummy_byte();
     return true;
 
+}
+
+_Bool sd_card_read_blocks(uint32_t block_addr, uint16_t num_blocks, uint8_t *buffer){
+    
+    gpio_put(CS, 0);
+    
+    // send CMD18 to read multiblock
+    send_cmd(18, block_addr, 0x57);
+    if(read_response() != 0x00){
+        gpio_put(CS, 1);
+        return false;
+    }
+
+    // sd card still gives a data start token between blocks, so we
+    // must filter it out every 512 reads
+    for(uint16_t i = 0; i < num_blocks; i++){
+        wait_for_data_start();
+        // read real data
+        spi_read_blocking(spi0, 0xFF, buffer + (BLOCK_SIZE * i), BLOCK_SIZE);
+    }
+
+    // stop transaction or something
+    send_cmd(12, 0, 0x01);
+
+    // crc would usually go here in the form of two reads
+    spi_write_read_blocking(spi0, &high, &dummy, 2);
+
+    gpio_put(CS, 1);
+    send_dummy_byte();
+    return true;
+
+}
+
+_Bool sd_card_write_block(uint32_t block_addr, const void *buffer, uint16_t buffer_size){
+
+    gpio_put(CS, 0);
+
+    // send CMD24 to write a block
+    send_cmd(24, block_addr, 0x01);
+    if(read_response() != 0x00){
+        gpio_put(CS, 1);
+        return false;
+    }
+
+    // send data start token
+    uint8_t ds = 0xFE;
+    spi_write_blocking(spi0, &ds, 1);
+
+    // write the buffer to the SD card
+    spi_write_blocking(spi0, buffer, buffer_size);
+
+    // write a bunch of dummy data if the buffer is under 512 bytes
+    for(uint16_t i = buffer_size; i < BLOCK_SIZE; i++){
+        spi_write_blocking(spi0, &zero, 1);
+    }
+
+    // crc would usually go here in the form of two reads
+    spi_write_read_blocking(spi0, &high, &dummy, 2);
+    // response checking would also go here, but doesn't work
+
+    gpio_put(CS, 1);
+    send_dummy_byte();
+    return true;
 }
