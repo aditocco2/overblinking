@@ -1,8 +1,11 @@
+import os
 from PIL import Image, ImageSequence
 
 width, height = 64, 64
-image_files = ["images/spongedance-4.gif", "images/iuh.gif"]
-sd_file = "images/multigif.img"
+gif_dir = "gifs"
+sd_file = "raw/multigif.img"
+
+image_files = [f"{gif_dir}/{f}" for f in os.listdir(gif_dir)]
 
 def main():
 

@@ -2,7 +2,7 @@
 
 # Configure stuff here then compile your program :thumbs_up:
 
-set(main_source_file "one_gif.c")
+set(main_source_file "multigiftake2.c")
 set(dependencies "sd_card.c" "hub75.c" "hub75.pio") # c/pio files only
 
 set(include_paths "src" "drivers")
@@ -14,6 +14,7 @@ set(libraries
     #FreeRTOS-Kernel-Heap4
     FreeRTOS-Kernel-Static
     pico_stdlib
+    pico_rand
     hardware_pio
     hardware_spi
     )
