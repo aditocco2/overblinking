@@ -49,13 +49,10 @@ void main(void){
 
         hub75_refresh();
 
-        uint32_t primask;
         if(!sd_init_flag){
-            primask = save_and_disable_interrupts();
             sd_init_flag = sd_card_init();
             continue;
         }
-        restore_interrupts(primask);
 
         if(switch_media_flag){
             switch_media();
@@ -76,6 +73,12 @@ _Bool read_pixel_data_cb(__unused repeating_timer_t *rt){
 }
 
 _Bool switch_media(){
+
+    // if SD removed, try to switch media ASAP
+    if(!sd_init_flag){
+        switch_media_flag = true;
+        return false;
+    }
 
     read_pixel_data_flag = false;
 
@@ -128,6 +131,10 @@ _Bool switch_media(){
 }
 
 _Bool read_pixel_data(){
+
+    if(!sd_init_flag){
+        return false;
+    }
 
     // Reads one SD card block at a time into image buffer
     // When all 16 blocks have been read, push the SD buffer to the HUB75 driver
