@@ -1,7 +1,6 @@
 #include <pico/stdlib.h>
 #include <pico/rand.h>
 #include <pico/time.h>
-#include <hardware/sync.h>
 #include <stdio.h>
 #include "hub75.h"
 #include "sd_card.h"
@@ -11,19 +10,22 @@
 uint8_t control_buffer[512];
 uint8_t *image_buffer;
 
-// No, you don't understand, we NEED all these variables to be file scope
+uint32_t media_index, num_media;
 uint32_t media_addr;
-uint32_t frame_num, num_frames;
+uint32_t num_frames;
+uint16_t pixel_read_interval_us;
+
+uint32_t frame_num;
 uint8_t block_num_within_frame;
-uint16_t frame_time_ms, pixel_read_interval_us;
-uint32_t media_num, num_media;
 
-_Bool sd_init_flag, switch_media_flag, read_pixel_data_flag;
+// Control flow flags
+_Bool sd_success, time_to_switch_media, media_switch_in_progress;
 
-_Bool switch_media_cb(__unused repeating_timer_t *rt);
 _Bool read_pixel_data_cb(__unused repeating_timer_t *rt);
-_Bool switch_media();
-_Bool read_pixel_data();
+_Bool switch_media_cb(__unused repeating_timer_t *rt);
+void switch_media();
+void read_pixel_data();
+void get_num_media();
 
 struct repeating_timer media_switch_timer, pixel_read_timer;
 
@@ -33,78 +35,80 @@ void main(void){
     hub75_configure();
     image_buffer = (uint8_t *)hub75_get_back_buffer();
 
-    // try to load number of gifs until success
-    while(!sd_init_flag){
-        sd_init_flag = sd_card_init();
-        if(sd_init_flag){  
-            sd_init_flag = sd_card_read_block(0, control_buffer, 512);
-        }
-    }
-    num_media = (uint32_t)control_buffer[0];
-
-    switch_media_flag = true;
     add_repeating_timer_ms(-1 * MEDIA_SWITCH_INTERVAL_MS, switch_media_cb, NULL, &media_switch_timer);
 
     while(1){
 
         hub75_refresh();
 
-        if(!sd_init_flag){
-            sd_init_flag = sd_card_init();
+        if(!sd_success){
+            sd_success = sd_card_init();
+            if(sd_success){
+                get_num_media();
+            }
             continue;
         }
 
-        if(switch_media_flag){
+        if(time_to_switch_media){
             switch_media();
         }
     }    
 }
 
-_Bool switch_media_cb(__unused repeating_timer_t *rt){
-    switch_media_flag = true;
-    return true;
-}
-
 _Bool read_pixel_data_cb(__unused repeating_timer_t *rt){
-    if(read_pixel_data_flag){    
+    if(sd_success){  
         read_pixel_data();
     }
     return true;
 }
 
-_Bool switch_media(){
-
-    // if SD removed, try to switch media ASAP
-    if(!sd_init_flag){
-        switch_media_flag = true;
-        return false;
+_Bool switch_media_cb(__unused repeating_timer_t *rt){
+    if(sd_success){  
+        time_to_switch_media = true;
     }
+    return true;
+}
 
-    read_pixel_data_flag = false;
+void get_num_media(){
+    sd_success = sd_card_read_block(0, control_buffer, 512);
+    if(sd_success){
+        num_media = *(uint32_t *)&control_buffer[0];
+        time_to_switch_media = true;
+    }
+}
 
-    // Pick a random gif and load its data (address/length/frametime)
+void switch_media(){
+
+    cancel_repeating_timer(&pixel_read_timer);
+
+    // Pick random media and load its data
+    // Be sure to pick media that is not currently being played
     if(num_media > 1){ 
         uint32_t random_number = get_rand_32() % (num_media - 1);
-        if(random_number >= media_num){
-            media_num = random_number + 1;
+        if(random_number >= media_index){
+            media_index = random_number + 1;
         }
         else{
-            media_num = random_number;
+            media_index = random_number;
         }
     }
     // handle div/0 case
     else{
-        media_num = 0;
+        media_index = 0;
     }
-    
-    uint32_t table_row = media_num + 1;
+
+    // Now get this media's address/length/frametime from the table
+
+    // Figure out what block the appropriate table row is in
+    uint32_t table_row = media_index + 1;
     uint16_t sector = table_row / (512 / 16); // 16 bytes per row
     uint16_t table_row_index = table_row * 16 % 512;
-    
-    if(!sd_card_read_block(sector, control_buffer, 512)){
-        sd_init_flag = false;
-        
-        return false;
+
+    // Load it from the SD card
+    sd_success = sd_card_read_block(sector, control_buffer, 512);
+    if(!sd_success){
+        time_to_switch_media = true;
+        return;
     }
 
     // table row byte assignment:
@@ -114,36 +118,29 @@ _Bool switch_media(){
     // 10 through 15: unused
     media_addr = *(uint32_t *)&control_buffer[table_row_index];
     num_frames = *(uint32_t *)&control_buffer[table_row_index + 4];
-    frame_time_ms = *(uint16_t *)&control_buffer[table_row_index + 8];
+    uint16_t frame_time_ms = *(uint16_t *)&control_buffer[table_row_index + 8];
 
-    // Change the pixel reading interval to 1/16 of the gif's frametime
     pixel_read_interval_us = frame_time_ms * 1000 / 16;
-    cancel_repeating_timer(&pixel_read_timer);
-    add_repeating_timer_us(pixel_read_interval_us, read_pixel_data_cb, NULL, &pixel_read_timer);
 
     frame_num = 0;
     block_num_within_frame = 0;
 
-    switch_media_flag = false;
-    read_pixel_data_flag = true;
+    add_repeating_timer_us(-pixel_read_interval_us, read_pixel_data_cb, NULL, &pixel_read_timer);
 
-    return true;
+    time_to_switch_media = false;
+            
 }
 
-_Bool read_pixel_data(){
-
-    if(!sd_init_flag){
-        return false;
-    }
+void read_pixel_data(){
 
     // Reads one SD card block at a time into image buffer
     // When all 16 blocks have been read, push the SD buffer to the HUB75 driver
 
     // (cursed math here, replace with something more sensible later)
-    if(!sd_card_read_block((media_addr + 16 * frame_num + block_num_within_frame), 
-                            image_buffer + 512 * block_num_within_frame, 512)){
-        sd_init_flag = false;
-        return false;
+    sd_success = sd_card_read_block((media_addr + (frame_num * 16) + block_num_within_frame), 
+                                    image_buffer + 512 * block_num_within_frame, 512);
+    if(!sd_success){
+        return;
     }
 
     // move onto the next block
@@ -157,6 +154,4 @@ _Bool read_pixel_data(){
     if(frame_num == num_frames){
         frame_num = 0;
     }
-
-    return true;
 }

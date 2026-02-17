@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <pico/stdlib.h>
 
-//define DEBUG
+#define DEBUG
 
 #define MISO 16
 #define CS 17
