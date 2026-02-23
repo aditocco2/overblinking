@@ -1,7 +1,7 @@
 import os
 from PIL import Image
 
-input_file = "images/sd_error.png"
+input_file = "images/test_gradient.png"
 
 width = 64
 height = 64

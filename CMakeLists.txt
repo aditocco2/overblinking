@@ -2,8 +2,8 @@
 
 # Configure stuff here then compile your program :thumbs_up:
 
-set(main_source_file "test_sd_card.c")
-set(dependencies "sd_card.c" "hub75.c" "hub75.pio") # c/pio files only
+set(main_source_file "hub75_v2.c")    
+set(dependencies "hub75_v2.pio") # c/pio files only
 
 set(include_paths "src" "drivers")
 
@@ -14,7 +14,6 @@ set(libraries
     # FreeRTOS-Kernel-Heap4
     # FreeRTOS-Kernel-Static
     pico_stdlib
-    pico_rand
     hardware_pio
     hardware_spi
     hardware_dma
