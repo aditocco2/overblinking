@@ -14,6 +14,7 @@ set(libraries
     # FreeRTOS-Kernel-Heap4
     # FreeRTOS-Kernel-Static
     pico_stdlib
+    pico_rand
     hardware_pio
     hardware_spi
     hardware_dma

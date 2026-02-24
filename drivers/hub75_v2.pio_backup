@@ -24,11 +24,10 @@ public entry_point:               ; public label can be referenced externally
     out y, 32           side 0    ; shift out row width from OSR into y (one time init)
 .wrap_target
     mov x, y            side 0    ; copy y over to x to make a counter
-data:
-    out pins, 8  [2]    side 0    ; shift 8 bits out of OSR right onto the RGB0 and RGB1 pins
-    jmp x-- data [2]    side 1    ; jump back if x>0, then decrement x, also set CLK high
+get_data:
+    out pins, 8         side 0    ; shift 8 bits out of OSR right onto the RGB0 and RGB1 pins
+    jmp x-- get_data    side 1    ; jump back if x>0, then decrement x, also set CLK high
     irq set 0           side 0    ; when done with all pixels in row, tell Row SM to update the row
-    wait 1 irq 1        side 0    ; wait for LATCH to finish
 .wrap                             ; loop back to wrap_target
 
 % c-sdk {
@@ -52,13 +51,15 @@ static inline void hub75_data_program_init(PIO pio, uint sm, uint offset, uint r
     // Join the TX FIFO and RX FIFO to make an 8-word mega-FIFO
     sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
 
+    sm_config_set_clkdiv(&c, 20.0f);
+
     // Set the program counter to the start of the program and go
     pio_sm_init(pio, sm, offset, &c);
     pio_sm_exec(pio, sm, offset + hub75_data_offset_entry_point);
     pio_sm_set_enabled(pio, sm, true);
 
     // one-time setup the program by passing in how many words per row to use
-    pio_sm_put_blocking(pio, sm, width - 1);
+    pio_sm_put_blocking(pio, sm, width);
 }
 %}
 
@@ -70,15 +71,14 @@ public entry_point:
 .wrap_target  
     out isr, 32         side 2    ; shift out pulse width from OSR into ISR
     set y, 31           side 2    ; y will be the bitwise opposite of rowcel
-row:
+row_out:
     wait 1 irq 0        side 2    ; wait for the IRQ from the data SM goes high
     mov pins, ~y        side 2    ; take bitwise invert of y and move to row pins
     mov x, isr          side 3    ; move ISR into x, and pulse LATCH
-    irq set 1           side 3    ; Tell the Data SM we're done
-pulse:
-    jmp x-- pulse       side 0    ; stay here if x positive, decrement x, and turn off OEN
+pulse_loop:
+    jmp x-- pulse_loop  side 0    ; stay here if x positive, decrement x, and turn off OEN
 end:
-    jmp y-- row         side 2    ; if not on final row, wait for next row's IRQ
+    jmp y-- row_out     side 0    ; if not on final row, wait for next row's IRQ
 .wrap
 
 % c-sdk {
@@ -102,6 +102,8 @@ static inline void hub75_row_program_init(PIO pio, uint sm, uint offset, uint ro
 
     // Join the TX FIFO and RX FIFO to make an 8-word mega-FIFO
     sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+
+    sm_config_set_clkdiv(&c, 20.0f);
 
     // Set the program counter to the start of the program and go
     pio_sm_init(pio, sm, offset, &c);
