@@ -1,7 +1,7 @@
 import os
 from PIL import Image
 
-input_file = "images/test_gradient.png"
+input_file = "images/test_gradient_32.png"
 
 width = 64
 height = 64
@@ -13,6 +13,8 @@ image = Image.open(input_file)
 
 # Convert to RGB888 if not already RGB888
 image = image.convert("RGB")
+
+image = image.resize((width, height))
 
 # Convert to RGB565 
 pixels_16b = []

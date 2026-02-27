@@ -11,26 +11,6 @@
 #include "hub75.h"
 #include "hub75.pio.h"
 
-//-----------User Config-----------
-
-#define WIDTH 64
-#define HEIGHT 64
-
-#define RED_0 0
-#define ROW_A 6
-#define NUM_ROW_PINS 5
-#define CLK 11
-#define LATCH 12
-#define OEN 13
-
-#define PIO_BLOCK pio0
-#define DATA_SM 0
-#define ROW_SM 1
-
-#define BRIGHTNESS 10
-
-//---------------------------------
-
 #define BYTES_PER_BITPLANE ((WIDTH * HEIGHT) / 2)
 #define RGB_N_PINS 6
 
@@ -52,10 +32,7 @@ static const uint8_t cie_brightness_table[64] = {
 };
 
 // Pulse widths for sending to Row SM
-static uint32_t pw_table[] = {
-    BRIGHTNESS * 1,  BRIGHTNESS * 2,  BRIGHTNESS * 4,  BRIGHTNESS * 8,
-    BRIGHTNESS * 16, BRIGHTNESS * 32, BRIGHTNESS * 64, BRIGHTNESS * 128
-};
+static uint32_t pw_table[] = {10, 20, 40, 80, 160, 320, 640, 1280};
 
 int rgb_channel, pw_channel, rgb_reload_channel, pw_reload_channel;
 dma_channel_config rgb_config, pw_config, rgb_reload_config, pw_reload_config;
@@ -70,6 +47,7 @@ void hub75_set_refresh_cb(void (*callback)());
 uint16_t *hub75_get_back_buffer();
 void hub75_load_image();
 void hub75_set_pixel(uint8_t x, uint8_t y, uint16_t rgb565);
+void hub75_set_brightness(uint8_t b);
 void hub75_update();
 
 static void configure_all_dma();
@@ -102,7 +80,16 @@ void hub75_load_image(uint16_t * image_pointer){
 }
 
 void hub75_set_pixel(uint8_t x, uint8_t y, uint16_t rgb565){
-    back_buffer[y * WIDTH + x] = rgb565;
+    if((x >= 0) && (y >= 0) && (x < WIDTH) && (y < HEIGHT)){
+        back_buffer[y * WIDTH + x] = rgb565;
+    }
+    
+}
+
+void hub75_set_brightness(uint8_t b){
+    for(uint8_t i = 0; i < 8; i++){
+        pw_table[i] = b << i;
+    }
 }
 
 void hub75_update(){

@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <pico/stdlib.h>
 
-#define DEBUG
+// #define DEBUG
 
 #define MISO 16
 #define CS 17
@@ -33,28 +33,20 @@ static uint8_t dummy;
 // timer for timeout shenanigans
 absolute_time_t start_time;
 
-static int tx_dma_channel, rx_dma_channel;
-static dma_channel_config tx_dma_config, rx_dma_config;
-static _Bool dma_claimed;
-
 _Bool sd_card_init();
-_Bool sd_card_init_fsm();
 _Bool sd_card_write_block(uint32_t block_addr, const void *buffer, uint16_t buffer_size);
 _Bool sd_card_read_block(uint32_t block_addr, uint8_t *buffer, uint16_t buffer_size);
-_Bool sd_card_read_block_non_blocking(uint32_t block_addr, uint8_t *buffer, uint16_t buffer_size, void (*callback)());
 _Bool sd_card_read_blocks(uint32_t block_addr, uint16_t num_blocks, uint8_t* buffer);
+_Bool sd_card_check_status();
 
 static void send_cmd(uint8_t cmd, uint32_t arg, uint8_t crc);
 static uint8_t read_response();
 static _Bool wait_card_busy();
 static void send_dummy_byte();
-static void wait_for_data_start();
+static _Bool wait_for_data_start();
 static void reset_timer();
 static _Bool timer_exceeds_us(uint32_t us);
 static _Bool timeout();
-
-static void sd_finished_handler();
-static void (*sd_finished_callback)(); // ptr to function returning void
 
 static void send_cmd(uint8_t cmd, uint32_t arg, uint8_t crc){
     wait_card_busy();
@@ -66,6 +58,10 @@ static void send_cmd(uint8_t cmd, uint32_t arg, uint8_t crc){
 
 static void send_dummy_byte(){
     spi_write_blocking(spi0, &high, 1);
+}
+
+static void read_dummy_crc(){
+    spi_read_blocking(spi0, 0xFF, &dummy, 2);
 }
 
 static void reset_timer(){
@@ -83,7 +79,6 @@ static _Bool timeout(){
 
 // keep going until we get a byte that's not 0xFF (or timeout)
 static uint8_t read_response(){
-    
     reset_timer();
     uint8_t response;
     do{
@@ -95,14 +90,11 @@ static uint8_t read_response(){
             break;
         }
     } while(response == 0xFF);
-
     return response;
 }
 
 // card is busy until we get 0xFF again
-// return true on getting 0xFF, return false on timeout
 static _Bool wait_card_busy(){
-
     uint8_t response = 0xFF;
     reset_timer();
     while(1){
@@ -116,11 +108,20 @@ static _Bool wait_card_busy(){
     }
 }
 
-static void wait_for_data_start(){
+// Reading data requires us to wait for a data start token
+static _Bool wait_for_data_start(){
+    reset_timer();
+
     uint8_t r_byte = 0xFF;
     while(r_byte != 0xFE){
         spi_read_blocking(spi0, 0xFF, &r_byte, 1);
+
+        if(timeout()){
+            return false;
+        }
     }
+
+    return true;
 }
 
 // initialize card, assuming V2
@@ -210,7 +211,6 @@ _Bool sd_card_init(){
     }
 
     gpio_put(CS, 1);
-
     send_dummy_byte();
 
     // now that init is over, we can up the bitrate
@@ -219,141 +219,12 @@ _Bool sd_card_init(){
     return true;
 }
 
-_Bool sd_card_init_fsm(){
-    // oh yeah we're going there
-    static enum {SPI_INIT, WAIT_74_CLOCK_CYCLES, SEND_CMD0, WAIT_FOR_CMD0,
-                SEND_CMD8, WAIT_FOR_CMD8, SEND_CMD55_AND_CMD41, WAIT_FOR_CMD41,
-                SUCCESS} state;
-    
-    _Bool retval = false;
-    static uint8_t response = 0xFF;
-
-    switch(state){
-        case SPI_INIT:
-            gpio_init(CS);
-            gpio_set_dir(CS, GPIO_OUT);
-            gpio_put(CS, 1);
-
-            gpio_set_function(MISO, GPIO_FUNC_SPI);
-            gpio_set_function(SCLK, GPIO_FUNC_SPI);
-            gpio_set_function(MOSI, GPIO_FUNC_SPI);
-            gpio_pull_up(MISO);
-
-            spi_init(spi0, INIT_RATE);
-            spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
-
-            reset_timer();
-
-            state = WAIT_74_CLOCK_CYCLES;
-            break;
-
-        case WAIT_74_CLOCK_CYCLES:
-            if(timer_exceeds_us(74 * 1000000 / INIT_RATE)){
-                state = SEND_CMD0;
-            }
-            break;
-
-        case SEND_CMD0:
-            gpio_put(CS, 0);
-            send_dummy_byte();
-            send_cmd(0, 0, 0x95);
-            reset_timer();
-            state = WAIT_FOR_CMD0;
-            break;
-
-        case WAIT_FOR_CMD0:
-            spi_read_blocking(spi0, 0xFF, &response, 1);
-            if(response == 0x01){
-                state = SEND_CMD8;
-            }
-            else if(response != 0xFF || timeout()){
-                #ifdef DEBUG 
-                printf("SD card did not respond to CMD0\n"); 
-                #endif
-                gpio_put(CS, 1);
-                state = SPI_INIT;
-            }
-            break;
-
-        case SEND_CMD8:
-            gpio_put(CS, 1);
-            send_dummy_byte();
-            gpio_put(CS, 0);
-            send_cmd(8, 0x01AA, 0x87);
-            reset_timer();
-            state = WAIT_FOR_CMD8;
-            
-        case WAIT_FOR_CMD8:
-            spi_read_blocking(spi0, 0xFF, &response, 1);
-            if(response == 0x01){
-                reset_timer();
-                state = SEND_CMD55_AND_CMD41;
-            }
-            else if(response != 0xFF || timeout()){
-                #ifdef DEBUG 
-                printf("SD card did not respond to CMD8\n"); 
-                #endif
-                gpio_put(CS, 1);
-                state = SPI_INIT;
-            }
-            break;
-
-        case SEND_CMD55_AND_CMD41:
-            gpio_put(CS, 1);
-            send_dummy_byte();   
-            gpio_put(CS, 0);
-            send_dummy_byte();
-
-            send_cmd(55, 0, 0x65);
-
-            for(uint8_t d = 0; d < 4; d++){
-                send_dummy_byte(); 
-            }
-
-            send_cmd(41, 0x40000000, 0x77);
-
-            state = WAIT_FOR_CMD41;
-            break;
-        
-        case WAIT_FOR_CMD41:
-            spi_read_blocking(spi0, 0xFF, &response, 1);
-            if(response == 0x00){
-                state = SUCCESS;
-            }
-            else if(response != 0xFF){
-                state = SEND_CMD55_AND_CMD41;
-            }
-            else if(timeout()){
-                #ifdef DEBUG 
-                printf("SD card did not respond to CMD41\n"); 
-                #endif
-                gpio_put(CS, 1);
-                state = SPI_INIT;
-            }
-            break;
-
-        case SUCCESS:
-            gpio_put(CS, 1);
-            send_dummy_byte();
-
-            spi_set_baudrate(spi0, DATA_RATE);
-
-            retval = true;
-
-            state = SPI_INIT;
-            
-            break;
-    }
-
-    return retval;
-}
-
 _Bool sd_card_read_block(uint32_t block_addr, uint8_t *buffer, uint16_t buffer_size){
 
     gpio_put(CS, 0);
     send_dummy_byte();
     
-    // send CMD17 single read block with the block address at the parameter
+    // CMD17 for single block read
     send_cmd(17, block_addr, 0x01);
     if(read_response() != 0x00){
         #ifdef DEBUG 
@@ -363,10 +234,11 @@ _Bool sd_card_read_block(uint32_t block_addr, uint8_t *buffer, uint16_t buffer_s
         return false;
     }
 
-    wait_for_data_start();
+    if(!wait_for_data_start()){
+        return false;
+    }
 
     // read the data into the buffer
-    // should replace with dma implementation eventually
     spi_read_blocking(spi0, 0xFF, buffer, buffer_size);
 
     // must read the entire 512 byte block, so flush out dummy data
@@ -374,8 +246,7 @@ _Bool sd_card_read_block(uint32_t block_addr, uint8_t *buffer, uint16_t buffer_s
         spi_read_blocking(spi0, 0xFF, &dummy, buffer_size);
     }
 
-    // crc would usually go here in the form of two reads
-    spi_write_read_blocking(spi0, &high, &dummy, 2);
+    read_dummy_crc();
 
     gpio_put(CS, 1);
     send_dummy_byte();
@@ -383,93 +254,6 @@ _Bool sd_card_read_block(uint32_t block_addr, uint8_t *buffer, uint16_t buffer_s
 
 }
 
-
-_Bool sd_card_read_block_non_blocking(uint32_t block_addr, uint8_t *buffer, uint16_t buffer_size, void (*callback)()){
-    
-    // configure DMA channels if first time
-    if(!dma_claimed){
-        rx_dma_channel = dma_claim_unused_channel(true);
-        rx_dma_config = dma_channel_get_default_config(rx_dma_channel);
-        channel_config_set_transfer_data_size(&rx_dma_config, DMA_SIZE_8);
-        channel_config_set_dreq(&rx_dma_config, spi_get_dreq(spi0, true));
-
-        tx_dma_channel = dma_claim_unused_channel(true);
-        tx_dma_config = dma_channel_get_default_config(tx_dma_channel);
-        channel_config_set_transfer_data_size(&tx_dma_config, DMA_SIZE_8);
-        channel_config_set_dreq(&tx_dma_config, spi_get_dreq(spi0, true));
-
-        dma_claimed = true;
-    }
-
-    if(dma_channel_is_busy(rx_dma_channel) || dma_channel_is_busy(tx_dma_channel)){
-        #ifdef DEBUG 
-        printf("SD card DMA is busy\n"); 
-        #endif
-        return false;
-    }
-
-    gpio_put(CS, 0);
-    send_dummy_byte();
-    
-    // send CMD17 single read block with the block address at the parameter
-    send_cmd(17, block_addr, 0x01);
-    if(read_response() != 0x00){
-        #ifdef DEBUG 
-        printf("SD card did not respond to CMD17\n"); 
-        #endif
-        gpio_put(CS, 1);
-        return false;
-    }
-
-    wait_for_data_start();
-
-    // enable DMA IRQ0 on both the DMA controller and CPU
-    // Have RX DMA call the handler when finished
-    dma_channel_set_irq0_enabled(rx_dma_channel, true);
-    irq_set_exclusive_handler(DMA_IRQ_0, sd_finished_handler);
-    irq_set_enabled(DMA_IRQ_0, true);
-
-    // RX DMA config goes from SPI FIFO to buffer
-    channel_config_set_read_increment(&rx_dma_config, false);
-    channel_config_set_write_increment(&rx_dma_config, true);
-    dma_channel_configure(
-        rx_dma_channel, &rx_dma_config,
-        buffer, &spi_get_hw(spi0)->dr,
-        BLOCK_SIZE, false
-    );
-
-    // TX DMA config goes from dummy to SPI FIFO
-    channel_config_set_read_increment(&tx_dma_config, false);
-    channel_config_set_write_increment(&tx_dma_config, false);
-    dma_channel_configure(
-        tx_dma_channel, &tx_dma_config,
-        &spi_get_hw(spi0)->dr, &high,
-        BLOCK_SIZE, false
-    );
-
-    sd_finished_callback = callback;
-
-    // Now start both DMA channels
-    dma_channel_start(tx_dma_channel);
-    dma_channel_start(rx_dma_channel);
-
-    return true;
-}
-
-static void sd_finished_handler(){
-
-    dma_irqn_acknowledge_channel(0, rx_dma_channel);
-
-    dma_channel_set_irq0_enabled(rx_dma_channel, false);
-    dma_channel_abort(tx_dma_channel);
-    dma_channel_abort(rx_dma_channel);
-
-    (*sd_finished_callback)();
-
-    spi_write_read_blocking(spi0, &high, &dummy, 2); // crc substitute
-    gpio_put(CS, 1);
-    send_dummy_byte();
-}
 
 _Bool sd_card_read_blocks(uint32_t block_addr, uint16_t num_blocks, uint8_t *buffer){
     
@@ -488,22 +272,25 @@ _Bool sd_card_read_blocks(uint32_t block_addr, uint16_t num_blocks, uint8_t *buf
     // sd card still gives a data start token between blocks, so we
     // must filter it out every 512 reads
     for(uint16_t i = 0; i < num_blocks; i++){
-        wait_for_data_start();
+        if(!wait_for_data_start()){
+            return false;
+        }
         // read real data
         spi_read_blocking(spi0, 0xFF, buffer + (BLOCK_SIZE * i), BLOCK_SIZE);
+        read_dummy_crc();
     }
 
     // stop transaction or something
     send_cmd(12, 0, 0x01);
 
-    // crc would usually go here in the form of two reads
-    spi_write_read_blocking(spi0, &high, &dummy, 2);
+    read_dummy_crc();
 
     gpio_put(CS, 1);
     send_dummy_byte();
     return true;
 
 }
+
 
 _Bool sd_card_write_block(uint32_t block_addr, const void *buffer, uint16_t buffer_size){
 
@@ -519,9 +306,8 @@ _Bool sd_card_write_block(uint32_t block_addr, const void *buffer, uint16_t buff
         return false;
     }
 
-    // send data start token
-    uint8_t ds = 0xFE;
-    spi_write_blocking(spi0, &ds, 1);
+    uint8_t data_start = 0xFE;
+    spi_write_blocking(spi0, &data_start, 1);
 
     // write the buffer to the SD card
     spi_write_blocking(spi0, buffer, buffer_size);
@@ -531,11 +317,26 @@ _Bool sd_card_write_block(uint32_t block_addr, const void *buffer, uint16_t buff
         spi_write_blocking(spi0, &zero, 1);
     }
 
-    // crc would usually go here in the form of two reads
-    spi_write_read_blocking(spi0, &high, &dummy, 2);
-    // response checking would also go here, but doesn't work
+    send_dummy_byte();
+    send_dummy_byte();
 
     gpio_put(CS, 1);
     send_dummy_byte();
+    return true;
+}
+
+
+_Bool sd_card_check_status(){
+    // send CMD13 to check for a response, return true if still alive
+    gpio_put(CS, 0);
+    send_cmd(13, 0, 0x95);
+    if(read_response() != 0x00){
+        #ifdef DEBUG 
+        printf("SD card did not respond to CMD13\n"); 
+        #endif
+        gpio_put(CS, 1);
+        return false;
+    }
+    gpio_put(CS, 1);
     return true;
 }

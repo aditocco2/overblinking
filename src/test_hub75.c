@@ -2,10 +2,13 @@
 #include "pico/stdlib.h"
 #include "hardware/sync.h"
 #include "hub75.h"
+#include "rgb565_colors.h"
+#include "hub75_text.h"
 #include "images/test_gradient.h"
 #include "images/ecd1015.h"
 
 uint32_t refresh_count = 0;
+uint8_t brightness = 10;
 absolute_time_t ts;
 
 void refresh_cb(){
@@ -24,6 +27,30 @@ void main(void){
             ts = get_absolute_time();
             printf("Refresh rate: %d Hz\n", refresh_count);
             refresh_count = 0;
+        }
+
+        int c = getchar_timeout_us(0);
+        if(c == 'w'){
+            brightness++;
+            hub75_set_brightness(brightness);
+            printf("brightness = %d\n", brightness);
+        }
+        else if (c == 's'){
+            brightness--;
+            hub75_set_brightness(brightness);
+            printf("brightness = %d\n", brightness);
+        }
+        else if (c == 'm'){
+            hub75_set_brightness(255);
+            printf("brightness = 255\n");
+        }
+        else if (c == 'n'){
+            hub75_set_brightness(brightness);
+            printf("brightness = %d\n", brightness);
+        }
+        else if (c == 't'){
+            hub75_write_large_text("test", 10, 10, ALIGN_LEFT, ALIGN_TOP, RGB565_Yellow);
+            hub75_update();
         }
     }
 }
