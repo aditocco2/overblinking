@@ -6,12 +6,12 @@ from image_proc import *
 
 # ------------------- User Parameters ---------------------
 
-media_dir = "media"
+media_dir = "media2"
 sd_file = "raw/media.bin"
 
 width, height = 64, 64
-switch_interval = 5
-stretch = True
+switch_interval = 4
+stretch = False
 randomize = True
 
 # ---------------------------------------------------------
@@ -69,12 +69,11 @@ def make_table_header(table, num_media):
     # Table Header Format:
     # bytes 0 to 3 are the number of pictures/videos
     # bytes 4 to 5 are how many seconds
-    # byte 6 is whether to stretch to fit
+    # byte 6 is coming soon
     # byte 7 is whether to randomize playback
     table_row = bytearray(16)
     table_row[0:4] = to_little_endian(num_media, 4)
     table_row[4:6] = to_little_endian(int(switch_interval), 2)
-    table_row[6] = 1 if stretch else 0
     table_row[7] = 1 if randomize else 0
     table[0:16] = table_row
 

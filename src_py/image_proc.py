@@ -38,8 +38,7 @@ def gif_to_bytearray(file, width, height, stretch=True):
     ba = bytearray()
     with Image.open(file) as image:
         for frame in ImageSequence.Iterator(image):
-            frame = frame.resize((width, height))
-            frame = image_to_bytearray(frame, width, height)
+            frame = image_to_bytearray(frame, width, height, stretch)
             ba.extend(frame)
 
     return ba

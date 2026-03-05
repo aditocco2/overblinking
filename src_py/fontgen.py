@@ -20,11 +20,13 @@ from PIL import Image, ImageFont, ImageDraw
 import os.path
 
 # MONOSPACE:
-FONT = {'fname': r'AtariST.ttf', 'size': 16, 'yoff':0, 'w': 8, 'h': 16}
+FONT = {'fname': r'AtariST.ttf', 'size': 16, 'yoff': 0, 'xoff': -1, 'w': 8, 'h': 16}
+# FONT = {'fname': r'3x7-pixels.ttf', 'size': 8, 'yoff': 0, 'xoff': 0, 'w': 4, 'h': 8}
 
 FONT_FILE = FONT['fname']
 FONT_SIZE = FONT['size']
 FONT_Y_OFFSET = FONT.get('yoff', 0)
+FONT_X_OFFSET = FONT.get('xoff', 0)
 
 CHAR_WIDTH = FONT.get('w', 5)
 CHAR_HEIGHT = FONT.get('h', 8)
@@ -49,7 +51,7 @@ drw = ImageDraw.Draw(img)
 #drw.fontmode = 1
 
 for i in range(len(FONTSTR)):
-    drw.text((i*GLYPH_WIDTH,FONT_Y_OFFSET), FONTSTR[i], (0,0,0), font=fnt)
+    drw.text((i*GLYPH_WIDTH+FONT_X_OFFSET,FONT_Y_OFFSET), FONTSTR[i], (0,0,0), font=fnt)
 
 img.save(OUTPUT_PNG)
 
@@ -66,7 +68,7 @@ for i in range(num_chars):
         for relative_x in range(CHAR_WIDTH):
             absolute_x = i*GLYPH_WIDTH + relative_x
             rgb = img.getpixel((absolute_x, y))
-            val = (val >> 1) | (0x80 if rgb[0] == 0 else 0)
+            val = (val << 1) | (1 if rgb[0] == 0 else 0)
 
         ints.append('0x%.2x' % (val))
     c = FONTSTR[i]

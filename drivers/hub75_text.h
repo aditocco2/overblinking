@@ -10,6 +10,8 @@ void hub75_write_large_text(const char *text, int16_t x, int16_t y,
                             alignment h_align, alignment v_align, uint16_t color_565);
 
 
-
+// Small text is 4x8
+void hub75_write_small_text(const char *text, int16_t x, int16_t y, 
+                            alignment h_align, alignment v_align, uint16_t color_565);
 
 #endif

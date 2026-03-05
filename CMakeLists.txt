@@ -18,7 +18,6 @@ set(libraries
     hardware_pio
     hardware_spi
     hardware_dma
-    hardware_sync
     )
 
 if(WIN32)

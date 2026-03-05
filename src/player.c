@@ -24,7 +24,7 @@ static uint32_t num_media;
 static uint16_t switch_interval_s;
 static _Bool randomize;
 
-static uint32_t media_index;
+static int32_t media_index;
 static uint32_t media_sector_addr;
 static uint32_t frame_num, num_frames;
 static uint16_t frame_time_ms;
@@ -177,10 +177,8 @@ _Bool switch_media(){
     uint16_t sector = table_row / (BLOCK_SIZE / TABLE_ROW_WIDTH);
     uint16_t table_row_index = table_row * TABLE_ROW_WIDTH % BLOCK_SIZE;
 
-    if(sector != control_sector){
-        if(!sd_card_read_block(sector, control_buffer, BLOCK_SIZE)){
-            return false;
-        }
+    if(!sd_card_read_block(sector, control_buffer, BLOCK_SIZE)){
+        return false;
     }
 
     media_sector_addr = *(uint32_t *)&control_buffer[table_row_index + MEDIA_SECTOR_ADDR_INDEX];
