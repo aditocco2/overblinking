@@ -1,17 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "pico/stdlib.h"
-#include "hardware/sync.h"
 #include "hub75.h"
 #include "rgb565_colors.h"
 #include "hub75_text.h"
 #include "images/test_gradient.h"
 #include "images/ecd1015.h"
 
+/*
+Shortcuts:
+w/s: increase/decrease brightness
+f: enter fullbright
+e: leave fullbright
+m: write medium text
+l: write large text
+*/
+
 uint32_t refresh_count = 0;
+uint32_t refresh_rate = 0;
 uint8_t brightness = 10;
+uint8_t old_brightness;
 absolute_time_t ts;
 
+void print_info();
 void print_refresh_rate();
 void print_brightness();
 void refresh_cb();
@@ -27,31 +38,39 @@ void main(void){
         // print refresh count every second
         if (absolute_time_diff_us(ts, get_absolute_time()) > 1000000){
             ts = get_absolute_time();
-            print_refresh_rate();
+            refresh_rate = refresh_count;
             refresh_count = 0;
+            print_info();
         }
 
         int c = getchar_timeout_us(0);
         if(c == 'w'){
             brightness++;
             hub75_set_brightness(brightness);
-            print_brightness();
+            print_info();
         }
         else if (c == 's'){
             brightness--;
             hub75_set_brightness(brightness);
-            print_brightness();
+            print_info();
+        }
+        else if (c == 'f'){        
+            old_brightness = brightness;
+            brightness = 255;
+            hub75_set_brightness(255);
+            print_info();
+        }
+        else if (c == 'e'){
+            brightness = old_brightness;
+            hub75_set_brightness(brightness);
+            print_info();
+        }
+        else if (c == 'l'){
+            hub75_write_large_text("big text", 0, 25, ALIGN_LEFT, ALIGN_TOP, RGB565_Black_bean);
+            hub75_update();
         }
         else if (c == 'm'){
-            hub75_set_brightness(255);
-            print_brightness();
-        }
-        else if (c == 'n'){
-            hub75_set_brightness(brightness);
-            print_brightness();
-        }
-        else if (c == 't'){
-            hub75_write_large_text("big test", 0, 10, ALIGN_LEFT, ALIGN_TOP, RGB565_Yellow);
+            hub75_write_medium_text("Medium text", 0, 25, ALIGN_LEFT, ALIGN_TOP, RGB565_Black_bean);
             hub75_update();
         }
     }
@@ -61,18 +80,21 @@ void refresh_cb(){
     refresh_count++;
 }
 
+void print_info(){
+    hub75_load_image(test_gradient);
+    print_brightness();
+    print_refresh_rate();
+    hub75_update(); 
+}
+
 void print_brightness(){
     char bright[4];
-    hub75_load_image(test_gradient);
-    hub75_write_small_text("Brightness: ", 2, 54, ALIGN_LEFT, ALIGN_TOP, RGB565_Red);
-    hub75_write_small_text(itoa(brightness, bright, 10), 2 + 12 * 4, 54, ALIGN_LEFT, ALIGN_TOP, RGB565_Red);
-    hub75_update(); 
+    hub75_write_small_text("Brightness: ", 2, 4, ALIGN_LEFT, ALIGN_TOP, RGB565_Black);
+    hub75_write_small_text(itoa(brightness, bright, 10), 2 + 12 * 4, 4, ALIGN_LEFT, ALIGN_TOP, RGB565_Black);
 }
 
 void print_refresh_rate(){
     char refresh[4];
-    hub75_load_image(test_gradient);
-    hub75_write_small_text("Refresh: ", 2, 54, ALIGN_LEFT, ALIGN_TOP, RGB565_Red);
-    hub75_write_small_text(itoa(refresh_count, refresh, 10), 2 + 9 * 4, 54, ALIGN_LEFT, ALIGN_TOP, RGB565_Red);
-    hub75_update(); 
+    hub75_write_small_text("Refresh: ", 2, 56, ALIGN_LEFT, ALIGN_TOP, RGB565_Black);
+    hub75_write_small_text(itoa(refresh_rate, refresh, 10), 2 + 9 * 4, 56, ALIGN_LEFT, ALIGN_TOP, RGB565_Black);
 }
