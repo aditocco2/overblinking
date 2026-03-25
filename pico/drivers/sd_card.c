@@ -167,7 +167,7 @@ _Bool sd_card_read_block(uint32_t block_addr, uint8_t *buffer, uint16_t buffer_s
 
     // must read the entire 512 byte block, so flush out dummy data
     for(uint16_t i = buffer_size; i < BLOCK_SIZE; i++){
-        spi_read_blocking(spi0, 0xFF, &dummy, buffer_size);
+        spi_read_blocking(spi0, 0xFF, &dummy, 1);
     }
 
     read_dummy_crc();

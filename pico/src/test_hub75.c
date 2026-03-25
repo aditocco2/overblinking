@@ -5,7 +5,6 @@
 #include "rgb565_colors.h"
 #include "hub75_text.h"
 #include "images/test_gradient.h"
-#include "images/ecd1015.h"
 
 /*
 Shortcuts:

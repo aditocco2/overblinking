@@ -1,4 +1,4 @@
-hub75#include <stdio.h>
+#include <stdio.h>
 #include "pico/stdlib.h"
 #include "pico/time.h"
 #include "hub75.h"
@@ -22,17 +22,17 @@ static uint16_t frame_time_ms;
 
 static uint32_t num_media;
 
-static int32_t media_index;
+static uint32_t media_index;
 static uint32_t frame_num;
 
-static uint8_t control_buffer[512];
+static uint8_t control_buffer[BLOCK_SIZE];
 static uint8_t *pixel_buffer;
 
 struct repeating_timer frame_read_timer;
 static _Bool read_new_frame_flag;
 
 _Bool player_init();
-_Bool player_get_num_media();
+uint32_t player_get_num_media();
 _Bool player_load_media(uint32_t index);
 void player_pause();
 void player_play();
@@ -41,30 +41,33 @@ static _Bool read_new_frame();
 static _Bool read_new_frame_cb(__unused repeating_timer_t *rt);
 
 _Bool player_init(){
-    hub75_configure();
-    hub75_set_brightness(20);
-    pixel_buffer = hub75_get_back_buffer();
+    pixel_buffer = (uint8_t *)hub75_get_back_buffer();
 
-    if(!sd_card_init()){
+    _Bool success = sd_card_init();
+    if(!success){
         hub75_write_large_text("Insert", 32, 32, ALIGN_CENTER, ALIGN_BOTTOM, RGB565_Red);
         hub75_write_large_text("SD Card", 32, 32, ALIGN_CENTER, ALIGN_TOP, RGB565_Red);
         hub75_update();
         return false;
     }
-    if(!sd_card_read_block(0, control_buffer, BLOCK_SIZE)){
+    if(success){
+        success = sd_card_read_block(0, control_buffer, BLOCK_SIZE);
+    }
+    if(success){
+        num_media = *(uint32_t *)&control_buffer[NUM_MEDIA_INDEX];
+        return true;
+    }
+    else{
         return false;
     }
-    num_media = *(uint32_t *)&control_buffer[NUM_MEDIA_INDEX];
-
-    return true;
 }
 
-_Bool player_get_num_media(){
+uint32_t player_get_num_media(){
     return num_media;
 }
 
 _Bool player_load_media(uint32_t index){
-    if(index >= num_media()){
+    if(index >= num_media){
         index = num_media;
     }
 
@@ -80,7 +83,7 @@ _Bool player_load_media(uint32_t index){
 
     media_sector_addr = *(uint32_t *)&control_buffer[table_row_index + MEDIA_SECTOR_ADDR_INDEX];
     num_frames = *(uint32_t *)&control_buffer[table_row_index + N_FRAMES_INDEX];
-    uint16_t frame_time_ms = *(uint16_t *)&control_buffer[table_row_index + FRAME_TIME_INDEX];
+    frame_time_ms = *(uint16_t *)&control_buffer[table_row_index + FRAME_TIME_INDEX];
 
     frame_num = 0;
 
@@ -92,8 +95,8 @@ _Bool player_load_media(uint32_t index){
 void player_play(){
     if(num_frames > 1){   
         add_repeating_timer_ms(-1 * frame_time_ms, read_new_frame_cb, NULL, &frame_read_timer);
-        read_new_frame_flag = true;
     }
+    read_new_frame_flag = true;
 }
 
 void player_pause(){
@@ -102,6 +105,7 @@ void player_pause(){
 
 _Bool player_update(){
     if(read_new_frame_flag){
+        read_new_frame_flag = false;
         if(read_new_frame()){ 
             hub75_update();
         }
@@ -127,4 +131,5 @@ static _Bool read_new_frame(){
 
 static _Bool read_new_frame_cb(__unused repeating_timer_t *rt){
     read_new_frame_flag = true;
+    return true;
 }

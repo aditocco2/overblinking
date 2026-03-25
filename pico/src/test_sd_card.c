@@ -13,14 +13,11 @@ m: multiblock read 0 and 1
 b: print in bytes
 w: write to block 2
 c: clear block 2
-n: read from block 2 non-blocking with dma
 */
 
 
 uint8_t message[1024];
 absolute_time_t ts;
-
-void on_finish();
 
 int main(){
     stdio_init_all();
@@ -87,20 +84,5 @@ int main(){
             }
             printf("cleared block 2\n");
         }
-        // read from block 2 non-blocking
-        if(c == 'n'){
-            ts = get_absolute_time();
-            if(!sd_card_read_block_non_blocking(2, message, 512, on_finish)){
-                printf("non-blocking SD read failed");
-                continue;
-            }
-            uint64_t time = absolute_time_diff_us(ts, get_absolute_time());
-            printf("SD read started in %llu us.\n", time);
-        }
     }
-}
-
-void on_finish(){
-    uint64_t time = absolute_time_diff_us(ts, get_absolute_time());
-    printf("SD read finished in %llu us. Data:\n%s\n", time, message);
 }
