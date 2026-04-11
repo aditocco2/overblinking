@@ -19,7 +19,7 @@
 
 #define TABLE_ROW_WIDTH 16
 
-#define MODESEL 20
+#define MODESEL 14
 
 _Bool mode_switch_flag;
 _Bool media_switch_flag;
