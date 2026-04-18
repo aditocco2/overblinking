@@ -79,7 +79,7 @@
 			(mirror no)
 			(drillshape 0)
 			(scaleselection 1)
-			(outputdirectory "C:/Users/pluh/Documents/2026Spring/EECE598/pcb/control_board_1/gerbers/")
+			(outputdirectory "gerbers/")
 		)
 	)
 	(net 0 "")
@@ -6140,7 +6140,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "d1320b47-78d5-4453-b69b-f3779b2fad84")
+		(uuid "ad9d52a3-fb1b-4444-b8af-4f840c3f4a3a")
 	)
 	(gr_line
 		(start 18 67)
@@ -6150,7 +6150,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "720d4ad5-3632-4a7a-a8f0-c5a010b6ce21")
+		(uuid "6c02480b-1ed5-469c-b373-a66a491396b5")
 	)
 	(gr_line
 		(start 22 16)
@@ -6160,7 +6160,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "a8aab9cd-b507-42bd-9320-b210d6535596")
+		(uuid "0682e163-df42-4879-be98-79aa57eaf154")
 	)
 	(gr_arc
 		(start 22 71)
@@ -6171,7 +6171,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "d3ddfc76-4f23-4102-ae80-844245304870")
+		(uuid "8d8d1b97-3032-47c9-8d42-283c9e799402")
 	)
 	(gr_arc
 		(start 99 16)
@@ -6182,7 +6182,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "1a7fc18a-37dd-4547-bc6b-9b9ffc70748d")
+		(uuid "82d5eece-fbe8-47b3-8a5e-2111f9fcace5")
 	)
 	(gr_line
 		(start 99 71)
@@ -6192,7 +6192,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "ca248095-db55-4675-b26a-7d5456c3375c")
+		(uuid "afa80e33-909d-4cc4-8fa1-4b78f354f5f8")
 	)
 	(gr_line
 		(start 103 20)
@@ -6202,7 +6202,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "195b6ce4-6a91-4aa7-8d16-6c6f5a512db9")
+		(uuid "e21cf4b2-268d-4698-97ee-f6d3f521ecbc")
 	)
 	(gr_arc
 		(start 103 67)
@@ -6213,7 +6213,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "e4089c46-6fc7-40ba-a469-7056fb291e83")
+		(uuid "69e3f159-ad9b-43ab-a53a-23720c848499")
 	)
 	(gr_text "this side should face the cap"
 		(at 33 48 -0)
@@ -6273,7 +6273,7 @@
 			(justify mirror)
 		)
 	)
-	(gr_text "Overblinking\nControl Board V2\n4/13/2026"
+	(gr_text "Overblinking\nControl Board V2\n4/17/2026"
 		(at 89 60 30)
 		(layer "B.SilkS")
 		(uuid "02f2ad9f-bf86-4a5c-82d1-2d1f27d6e240")
