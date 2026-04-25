@@ -19,6 +19,8 @@
 
 #define TABLE_ROW_WIDTH 16
 
+#define MAX_MEDIA 146
+
 #define MODESEL 14
 
 _Bool mode_switch_flag;
@@ -28,6 +30,9 @@ void top_level_fsm();
 
 uint32_t get_new_media_index(uint32_t current_index, uint32_t num_media, 
                             _Bool use_static_mode, _Bool randomize);
+
+void fill_array(uint32_t *arr, uint32_t len);
+void shuffle_array(uint32_t *arr, uint32_t len);
 
 struct repeating_timer media_switch_timer;
 _Bool media_switch_cb(__unused repeating_timer_t *rt);
@@ -63,9 +68,6 @@ void top_level_fsm(){
     _Bool success;
 
     static uint8_t table_header[TABLE_ROW_WIDTH];
-
-    // printf("%d %d %d \n", state, mode, media_index);
-    // for (int i = 0; i<16;i++){printf("%x, ", table_header[i]);}
 
     switch(state){
         case INIT:
@@ -152,31 +154,48 @@ void top_level_fsm(){
 uint32_t get_new_media_index(uint32_t current_index, uint32_t num_media, 
                             _Bool use_static_mode, _Bool randomize){
 
+    static uint32_t media_index_array[MAX_MEDIA];
+    static uint32_t pool_size;
+    static uint32_t tag = 0;
+    static _Bool initialized = false;
+
     uint32_t media_index;
 
-    uint32_t num_slideshow_media = num_media; 
-    if(use_static_mode){
-        num_slideshow_media--;
-    }
+    if(!initialized){
+        uint32_t pool_size = num_media; 
+        if(use_static_mode){
+            pool_size--;
+        }
 
-    if(!randomize){
-        media_index = (current_index + 1) % num_slideshow_media;
-    }
-    else if(num_slideshow_media == 1){
-        media_index = 0;
+        fill_array(media_index_array, pool_size);
+        if(randomize){
+            shuffle_array(media_index_array, pool_size);
+        }
+
+        tag = 0;
     }
     else{
-        // get a new number that's not the previous one
-        uint32_t random_number = (get_rand_32() >> 8 & 0xFFFF) % (num_slideshow_media - 1);
-        if(random_number >= current_index){
-            media_index = random_number + 1;
-        }
-        else{
-            media_index = random_number;
-        }   
+        tag = (tag + 1) % pool_size;
     }
 
+    media_index = media_index_array[tag];
     return media_index;
+}
+
+void fill_array(uint32_t *arr, uint32_t len){
+    for(uint32_t i = 0; i < len; i++){
+        arr[i] = i;
+    }
+}
+
+void shuffle_array(uint32_t *arr, uint32_t len){
+    for(uint32_t i = len - 1; i > 0; i--){
+        uint32_t j = get_rand_32() % (i + 1);
+
+        uint32_t temp = arr[j];
+        arr[j] = arr[i];
+        arr[i] = temp;
+    }
 }
 
 _Bool media_switch_cb(__unused repeating_timer_t *rt){
