@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="8.5in"
+   height="11in"
+   viewBox="0 0 215.9 279.4"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="hole_sheet.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.70710678"
+     inkscape:cx="248.90159"
+     inkscape:cy="638.51742"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g10" />
+  <defs
+     id="defs1">
+    <inkscape:path-effect
+       effect="fillet_chamfer"
+       id="path-effect9"
+       is_visible="true"
+       lpeversion="1"
+       nodesatellites_param="F,0,0,1,0,0,0,1 @ F,0,0,1,0,3,0,1 @ F,0,0,1,0,3,0,1"
+       radius="4"
+       unit="mm"
+       method="auto"
+       mode="F"
+       chamfer_steps="1"
+       flexible="false"
+       use_knot_distance="true"
+       apply_no_radius="true"
+       apply_with_radius="true"
+       only_selected="false"
+       hide_knots="false" />
+    <rect
+       x="87"
+       y="477"
+       width="274.45079"
+       height="65.25"
+       id="rect8" />
+    <rect
+       x="111.5"
+       y="572"
+       width="170.10355"
+       height="73.044679"
+       id="rect7" />
+    <rect
+       x="588.75"
+       y="62.75"
+       width="83.755914"
+       height="41.937011"
+       id="rect6" />
+    <rect
+       x="82.731493"
+       y="68.589358"
+       width="96.166522"
+       height="43.84062"
+       id="rect5" />
+    <rect
+       x="82.731491"
+       y="68.589355"
+       width="96.166519"
+       height="43.840618"
+       id="rect5-2" />
+    <rect
+       x="87"
+       y="477"
+       width="274.45078"
+       height="65.25"
+       id="rect8-9" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g10">
+      <rect
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="rect1"
+         width="190"
+         height="190"
+         x="12.95"
+         y="44.700001" />
+      <path
+         id="rect1-8"
+         style="vector-effect:non-scaling-stroke;fill-opacity:0;stroke:#000000;stroke-width:0.264583;-inkscape-stroke:hairline"
+         d="M 190.95,87.700001 V 218.7125 c 0,2.216 -1.784,3.9875 -4,3.9875 h -158 c -2.216,0 -4,-1.784 -4,-4 v -158 c 0,-2.216 1.784,-4 4,-4 h 133"
+         sodipodi:nodetypes="cssssssc" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.132291;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path2"
+         cx="18.950001"
+         cy="50.700001"
+         r="1.5" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.132291;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path2-2"
+         cx="18.950001"
+         cy="86.699997"
+         r="1.5" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.132291;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path2-13"
+         cx="38.95089"
+         cy="192.05386"
+         r="1.5" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.132291;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path2-2-8"
+         cx="38.95089"
+         cy="197.49226"
+         r="1.5" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.132291;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path2-1"
+         cx="54.950001"
+         cy="50.700001"
+         r="1.5" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.132291;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path2-7"
+         cx="-196.95"
+         cy="50.700001"
+         r="1.5"
+         transform="scale(-1,1)" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.132291;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path2-2-6"
+         cx="-196.95"
+         cy="86.700005"
+         r="1.5"
+         transform="scale(-1,1)" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.132291;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path2-1-1"
+         cx="-160.95"
+         cy="50.700001"
+         r="1.5"
+         transform="scale(-1,1)" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.132291;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path2-9"
+         cx="18.950005"
+         cy="-228.7"
+         r="1.5"
+         transform="scale(1,-1)" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.132291;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path2-2-5"
+         cx="18.950005"
+         cy="-192.7"
+         r="1.5"
+         transform="scale(1,-1)" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.132291;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path2-1-4"
+         cx="54.950001"
+         cy="-228.7"
+         r="1.5"
+         transform="scale(1,-1)" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.132291;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path2-7-3"
+         cx="-196.95"
+         cy="-228.7"
+         r="1.5"
+         transform="scale(-1)" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.132291;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path2-2-6-1"
+         cx="-196.95"
+         cy="-192.7"
+         r="1.5"
+         transform="scale(-1)" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.132291;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path2-1-1-2"
+         cx="-160.95"
+         cy="-228.7"
+         r="1.5"
+         transform="scale(-1)" />
+      <path
+         style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:1.05833, 0.264583;stroke-dashoffset:0;stroke-opacity:1"
+         d="m 190.95,87.700001 h -29 V 56.7"
+         id="path3" />
+      <circle
+         style="vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.320368;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"
+         id="path4"
+         cx="111.80186"
+         cy="136.63687"
+         transform="rotate(1.5971924)"
+         r="12" />
+      <text
+         xml:space="preserve"
+         transform="matrix(0.18708867,-0.18708867,0.18708867,0.18708867,-1.561847,79.192961)"
+         id="text5"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect5);display:inline;vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1;-inkscape-stroke:hairline"><tspan
+           x="82.732422"
+           y="82.589844"
+           id="tspan1">FRONT OF CAP</tspan></text>
+      <text
+         xml:space="preserve"
+         transform="matrix(0.26458333,0,0,0.26458333,12.817708,38.519656)"
+         id="text7"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;font-family:Calibri;-inkscape-font-specification:Calibri;text-align:start;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect7);display:inline;vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:hairline"><tspan
+           x="111.5"
+           y="586"
+           id="tspan3">Main Mounting Holes
+</tspan><tspan
+           x="111.5"
+           y="606"
+           id="tspan4">Backup Holes
+</tspan><tspan
+           x="111.5"
+           y="626"
+           id="tspan5">Cutout Sections</tspan></text>
+      <circle
+         style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.265;stroke-dasharray:1.06, 0.265;stroke-dashoffset:0;stroke-opacity:1"
+         id="path7"
+         cx="180.6584"
+         cy="212.4084"
+         r="5" />
+      <path
+         style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264999;stroke-dasharray:1.06, 0.264999;stroke-dashoffset:0;stroke-opacity:1"
+         d="m 36.897349,201.27209 4.396585,2.80633"
+         id="path8" />
+      <text
+         xml:space="preserve"
+         transform="matrix(0.26458333,0,0,0.26458333,-0.185623,46.777916)"
+         id="text8"
+         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:21.3333px;font-family:Calibri;-inkscape-font-specification:'Calibri Light';text-align:center;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect8);display:inline;vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:0.997585;stroke:#000000;stroke-width:1;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:hairline"
+         x="95.316406"
+         y="0"><tspan
+           x="169.39755"
+           y="495.66664"
+           id="tspan7"><tspan
+             style="font-weight:normal;-inkscape-font-specification:Calibri;vector-effect:non-scaling-stroke"
+             id="tspan6">Overblinking
+</tspan></tspan><tspan
+           x="118.44971"
+           y="522.33326"
+           id="tspan10"><tspan
+             style="font-weight:normal;-inkscape-font-specification:Calibri;vector-effect:non-scaling-stroke"
+             id="tspan9">Hole Mounting Sheet V1</tspan></tspan></text>
+      <text
+         xml:space="preserve"
+         transform="matrix(0.26458333,0,0,0.26458333,-0.81705891,82.982646)"
+         id="text8-5"
+         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:13.3333px;font-family:Calibri;-inkscape-font-specification:'Calibri Light';text-align:center;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect8-9);display:inline;vector-effect:non-scaling-stroke;fill:#000000;fill-opacity:0.997585;stroke:#000000;stroke-width:1;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:hairline"
+         x="95.316406"
+         y="0"><tspan
+           x="122.04811"
+           y="488.66664"
+           id="tspan12"><tspan
+             style="font-weight:normal;-inkscape-font-specification:Calibri;vector-effect:non-scaling-stroke"
+             id="tspan11">Place this sheet on the top of the cap.
+</tspan></tspan><tspan
+           x="158.26872"
+           y="505.33326"
+           id="tspan14"><tspan
+             style="font-weight:normal;-inkscape-font-specification:Calibri;vector-effect:non-scaling-stroke"
+             id="tspan13">This side should face up.</tspan></tspan></text>
+      <path
+         style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:0.264583;stroke-dasharray:1.05833, 0.264583;stroke-dashoffset:0;stroke-opacity:1"
+         d="M 178,43.000001 V 15 a 3,3 45 0 0 -3,-3 h -26"
+         id="path9"
+         inkscape:path-effect="#path-effect9"
+         inkscape:original-d="M 178,43.000001 V 12 h -29"
+         sodipodi:nodetypes="ccc"
+         transform="translate(12.95,44.7)" />
+    </g>
+  </g>
+</svg>
