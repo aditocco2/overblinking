@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-void fill_array(uint32_t *arr, uint32_t len){
+void fill_array_sequentially(uint32_t *arr, uint32_t len){
     for(uint32_t i = 0; i < len; i++){
         arr[i] = i;
     }
