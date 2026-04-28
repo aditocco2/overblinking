@@ -12,13 +12,16 @@
 uint16_t color_cycle_rgb565(_Bool reset);
 
 int main(){
+    stdio_init_all();
+
     hub75_configure();
     hub75_set_brightness(10);
 
-    const char message[] = "let's build platform component";
+    const char message[] = "balls in yo jaws";
+
 
     int16_t start_x = 64;
-    int16_t msg_len_pixels = strlen(message) * 6;
+    int16_t msg_len_pixels = strlen(message) * CHAR_WIDTH;
     int16_t end_x = start_x + msg_len_pixels;
 
     int16_t color;
@@ -28,7 +31,7 @@ int main(){
     while(1){
         // main loop delay
         absolute_time_t end = get_absolute_time();
-        if(absolute_time_diff_us(start, end) < 83333){
+        if(absolute_time_diff_us(start, end) < 50000){
             continue;
         }
         start = get_absolute_time();
@@ -52,7 +55,7 @@ int main(){
             }
         }
 
-        hub75_write_medium_text(message, start_x, 32, ALIGN_LEFT, ALIGN_TOP, color);
+        hub75_write_medium_text(message, start_x, 32, ALIGN_LEFT, ALIGN_CENTER, color);
 
         hub75_update();
     }

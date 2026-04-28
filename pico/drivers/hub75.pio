@@ -63,6 +63,8 @@ static inline void hub75_data_program_init(PIO pio, uint sm, uint offset,
 
     // one-time setup the program by passing in how many words per row to use
     pio_sm_put_blocking(pio, sm, width - 1);
+
+    // pio_sm_set_clkdiv(pio, sm, 10.0);
 }
 %}
 
@@ -76,9 +78,12 @@ public entry_point:
     set y, 31           side 2    ; y will be the bitwise opposite of rowcel
 row:
     wait 1 irq 0        side 2    ; wait for the IRQ from the data SM goes high
-    mov pins, ~y        side 2    ; take bitwise invert of y and move to row pins
-    mov x, isr          side 3    ; move ISR into x, and pulse LATCH
-    irq set 1           side 3    ; Tell the Data SM we're done
+    nop           [6]   side 2
+    nop           [7]   side 2
+    nop           [6]   side 2
+    mov pins, ~y  [7]   side 2    ; take bitwise invert of y and move to row pins
+    mov x, isr    [3]   side 3    ; move ISR (pulse width) into x, and pulse LATCH
+    irq set 1           side 2    ; Tell the Data SM we're done
 pulse:
     jmp x-- pulse       side 0    ; stay here if x positive, decrement x, and turn off OEN
 end:
@@ -117,6 +122,8 @@ static inline void hub75_row_program_init(PIO pio, uint sm, uint offset,
     pio_sm_init(pio, sm, offset, &c);
     pio_sm_exec(pio, sm, offset + hub75_row_offset_entry_point);
     pio_sm_set_enabled(pio, sm, true);
+
+    // pio_sm_set_clkdiv(pio, sm, 10.0);
 }
 %}
 

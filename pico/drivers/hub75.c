@@ -32,7 +32,7 @@ static const uint8_t cie_brightness_table[64] = {
 };
 
 // Pulse widths for sending to Row SM
-static uint32_t pw_table[] = {10, 20, 40, 80, 160, 320, 640, 1280};
+static uint32_t pw_table[] = {1, 2, 4, 8, 16, 32, 64, 128};
 
 int rgb_channel, pw_channel, rgb_reload_channel, pw_reload_channel;
 dma_channel_config rgb_config, pw_config, rgb_reload_config, pw_reload_config;
