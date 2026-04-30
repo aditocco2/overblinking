@@ -17,7 +17,7 @@ static void write_text(const char *text, int16_t x, int16_t y, const uint8_t *fo
                 uint8_t width, uint8_t height, alignment h_align, alignment v_align, 
                 uint16_t color_565);
 
-static void draw_char(char c, uint8_t x_left, uint8_t y_top, const uint8_t *font,
+static void draw_char(char c, int16_t x_left, int16_t y_top, const uint8_t *font,
                       uint8_t width, uint8_t height, uint16_t color_565);
 
 void hub75_write_small_text(const char *text, int16_t x, int16_t y, 
@@ -45,7 +45,7 @@ static void write_text(const char *text, int16_t x, int16_t y, const uint8_t *fo
                 uint8_t width, uint8_t height, alignment h_align, alignment v_align, 
                 uint16_t color_565){
     
-    uint8_t length = strlen(text);
+    uint16_t length = strlen(text);
 
     int16_t x_left, y_top;
     switch(h_align){
@@ -85,7 +85,9 @@ static void write_text(const char *text, int16_t x, int16_t y, const uint8_t *fo
     }
 }
 
-static void draw_char(char c, uint8_t x_left, uint8_t y_top, const uint8_t *font,
+#include <stdio.h>
+
+static void draw_char(char c, int16_t x_left, int16_t y_top, const uint8_t *font,
                       uint8_t width, uint8_t height, uint16_t color_565){
 
     // convert to an index in the array

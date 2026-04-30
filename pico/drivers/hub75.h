@@ -26,7 +26,7 @@ void hub75_set_refresh_cb(void (*callback)());
 void hub75_set_update_cb(void (*callback)());
 uint16_t *hub75_get_back_buffer();
 void hub75_load_image();
-void hub75_set_pixel(uint8_t x, uint8_t y, uint16_t rgb565);
+void hub75_set_pixel(int16_t x, int16_t y, uint16_t rgb565);
 void hub75_set_brightness(uint8_t b);
 void hub75_update();
 

@@ -1,3 +1,5 @@
+// just one more state machine bro, that's all i need
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -11,9 +13,9 @@
 #include "rgb565_colors.h"
 
 #define MAX_MEDIA 146
-#define TEXT_SCROLLING_PIXELS_PER_SECOND 20
+#define TEXT_SCROLLING_PIXELS_PER_SECOND 40
 
-#define TEXT_INST_SEPARATION 15
+#define TEXT_INST_SEPARATION 16
 
 #define SECTORS_PER_FRAME (WIDTH * HEIGHT * 2 / BLOCK_SIZE)
 
@@ -48,29 +50,27 @@ typedef struct{
     uint16_t frame_duration_ms;
     uint32_t current_media_index;
     uint32_t current_frame_num;
-    uint32_t num_frames_in_current_media;
+    uint32_t num_frames_in_video;
     uint32_t pool_size;
 } player_data_t;
 
 void main_fsm();
 
 void slideshow_media_index_fsm(player_data_t *ts, _Bool reset);
-_Bool text_scrolling_fsm(player_data_t *ts, char *str, _Bool reset);
-uint16_t color_cycle_rgb565_fsm(_Bool reset);
 _Bool player_get_metadata(player_data_t *ts, uint8_t *temp_buffer);
 _Bool player_load_media(player_data_t *ts, uint8_t *temp_buffer);
 _Bool player_get_frame(player_data_t *ts, uint8_t *frame_buffer);
+_Bool text_scrolling_fsm(player_data_t *ts, char *str, _Bool reset);
+uint16_t color_cycle_rgb565_fsm(_Bool reset);
 _Bool mode_switched(player_data_t *ts);
-
 void fill_array_sequentially(uint32_t *arr, uint32_t len);
 void shuffle_array(uint32_t *arr, uint32_t len);
 
 // Basic timer callbacks that just set flags
-struct repeating_timer media_switch_timer, frame_switch_timer, main_loop_timer;
-_Bool media_switch_flag, frame_switch_flag, main_loop_flag;
+struct repeating_timer media_switch_timer, frame_switch_timer;
+_Bool media_switch_flag, frame_switch_flag;
 _Bool media_switch_cb(__unused repeating_timer_t *rt) {media_switch_flag = true;}
 _Bool frame_switch_cb(__unused repeating_timer_t *rt) {frame_switch_flag = true;}
-_Bool main_loop_cb(__unused repeating_timer_t *rt) {main_loop_flag = true;}
 
 int main(){
     stdio_init_all();
@@ -88,7 +88,7 @@ int main(){
 }
 
 void main_fsm(){
-    static enum {INIT, GET_METADATA, SWITCH_MODE, LOAD_MEDIA, LOAD_FRAME, WAIT} state;
+    static enum {INIT, GET_METADATA, SWITCH_MODE, LOAD_MEDIA, INITIALIZE_MEDIA, PLAY_MEDIA} state;
 
     static player_data_t ts;
     
@@ -134,8 +134,6 @@ void main_fsm(){
             state = LOAD_MEDIA;
             break;
 
-        // might split video playing into its own fsm too, we will see.
-            
         case LOAD_MEDIA:
             if(ts.current_mode == STATIC){
                 ts.current_media_index = ts.pool_size;
@@ -145,36 +143,42 @@ void main_fsm(){
             }
             sd_succ = player_load_media(&ts, temp_buffer);
 
-            if(ts.current_media_type == TEXT){
-                sd_succ = text_scrolling_fsm(&ts, temp_buffer, true);
-            }
-
-            state = LOAD_FRAME;
+            state = INITIALIZE_MEDIA;
             break;
         
-        case LOAD_FRAME:
-            if(ts.current_media_type != TEXT){
+        case INITIALIZE_MEDIA:
+            if (ts.current_media_type == VIDEO){
                 sd_succ = player_get_frame(&ts, frame_buffer);
+                hub75_update();
             }
-            else{
-                text_scrolling_fsm(&ts, temp_buffer, false);
+            else if (ts.current_media_type == IMAGE){
+                sd_succ = sd_card_read_blocks(ts.media_address, SECTORS_PER_FRAME, frame_buffer);
+                hub75_update();
             }
-            
-            hub75_update();
-            state = WAIT;
+            else if(ts.current_media_type == TEXT){
+                sd_succ = text_scrolling_fsm(&ts, temp_buffer, true);
+                hub75_update();
+            }
+            state = PLAY_MEDIA;
             break;
 
-        case WAIT:
+        case PLAY_MEDIA:
             if(media_switch_flag){
                 media_switch_flag = false;
                 state = LOAD_MEDIA;
             }
-            else if(frame_switch_flag){
-                frame_switch_flag = false;
-                state = LOAD_FRAME;
-            }
             else if(mode_switched(&ts)){
                 state = SWITCH_MODE;
+            }
+            else if(frame_switch_flag && ts.current_media_type == VIDEO){
+                frame_switch_flag = false;
+                sd_succ = player_get_frame(&ts, frame_buffer);
+                hub75_update();
+            }
+            else if(frame_switch_flag && ts.current_media_type == TEXT){
+                frame_switch_flag = false;
+                text_scrolling_fsm(&ts, temp_buffer, false);
+                hub75_update();
             }
             else{
                 sd_succ = sd_card_check_status();
@@ -184,7 +188,6 @@ void main_fsm(){
 }
 
 _Bool player_get_metadata(player_data_t *ts, uint8_t *temp_buffer){
-
     if(!sd_card_read_block(0, temp_buffer, BLOCK_SIZE)){
         return false;
     }
@@ -241,11 +244,64 @@ void slideshow_media_index_fsm(player_data_t *ts, _Bool reset){
     ts->current_media_index = media_index_array[tag];
 }
 
+_Bool player_load_media(player_data_t *ts, uint8_t *temp_buffer){
+    
+    cancel_repeating_timer(&frame_switch_timer);
+
+    uint32_t table_row = ts->current_media_index + 1;
+    uint16_t sector = table_row / (BLOCK_SIZE / TABLE_ROW_WIDTH);
+    uint16_t table_row_index = table_row * TABLE_ROW_WIDTH % BLOCK_SIZE;
+
+    if(!sd_card_read_block(sector, temp_buffer, BLOCK_SIZE)){
+        return false;
+    }
+
+    ts->media_address = *(uint32_t *)&temp_buffer[table_row_index + MEDIA_SECTOR_ADDR_INDEX];
+
+    char media_type_char = *(char *)&temp_buffer[table_row_index + MEDIA_TYPE_INDEX];
+    switch(media_type_char){
+        case 'i':
+            ts->current_media_type = IMAGE;
+            break;
+        case 'v':
+            ts->current_media_type = VIDEO;
+            ts->num_frames_in_video = *(uint32_t *)&temp_buffer[table_row_index + N_FRAMES_INDEX];
+            ts->frame_duration_ms = *(uint16_t *)&temp_buffer[table_row_index + FRAME_TIME_INDEX];
+            ts->current_frame_num = 0;
+            add_repeating_timer_ms(ts->frame_duration_ms, frame_switch_cb, NULL, 
+                                   &frame_switch_timer);
+            break;
+        case 't':
+            ts->current_media_type = TEXT;
+            add_repeating_timer_ms(1000 / TEXT_SCROLLING_PIXELS_PER_SECOND, frame_switch_cb, NULL, 
+                                   &frame_switch_timer);
+            break;
+    }
+
+    return true;
+}
+
+_Bool player_get_frame(player_data_t *ts, uint8_t *frame_buffer){
+    if(!sd_card_read_blocks(ts->media_address + (ts->current_frame_num * SECTORS_PER_FRAME), 
+                            SECTORS_PER_FRAME, frame_buffer)){
+        return false;
+    }
+
+    ts->current_frame_num = ts->current_frame_num + 1;
+    if(ts->current_frame_num == ts->num_frames_in_video){
+        ts->current_frame_num = 0;
+    }
+
+    return true;
+}
+
 _Bool text_scrolling_fsm(player_data_t *ts, char *str, _Bool reset){
     static enum {INIT, SCROLL} state;
 
-    static int16_t start_x, end_x;
     static uint16_t color;
+    static int16_t start_x;
+    int16_t current_x;
+    static uint16_t len;
 
     if(reset){
         state = INIT;
@@ -259,6 +315,8 @@ _Bool text_scrolling_fsm(player_data_t *ts, char *str, _Bool reset){
                 return false;
             }
 
+            len = strlen(str);
+
             state = SCROLL;
             break;
             
@@ -269,24 +327,16 @@ _Bool text_scrolling_fsm(player_data_t *ts, char *str, _Bool reset){
                     hub75_set_pixel(x, y, 0);
                 }
             }
-
-            start_x--;
-            end_x = start_x + strlen(str) * MEDIUM_FONT_WIDTH;
-
+            
             color = color_cycle_rgb565_fsm(false);
 
-            hub75_write_medium_text(str, start_x, HEIGHT/2, ALIGN_LEFT, ALIGN_CENTER, color);
+            start_x--;
+            current_x = start_x;
 
-            // if there's still room after the text on the screen, make a second instance 
-            if(end_x < WIDTH - TEXT_INST_SEPARATION){
-                hub75_write_medium_text(str, end_x + TEXT_INST_SEPARATION, HEIGHT/2, 
-                                        ALIGN_LEFT, ALIGN_CENTER, color);
-            }
-
-            // if the 1st instance goes offscreen, make the second instance the new first instance
-            if(end_x <= 0){
-                start_x = TEXT_INST_SEPARATION;
-            }
+            do{
+                hub75_write_medium_text(str, current_x, HEIGHT/2, ALIGN_LEFT, ALIGN_CENTER, color);
+                current_x += len * MEDIUM_FONT_WIDTH + TEXT_INST_SEPARATION;
+            }while(current_x < WIDTH);
 
             break;
     }
@@ -357,59 +407,6 @@ uint16_t color_cycle_rgb565_fsm(_Bool reset){
     // build the rgb565 pixel by shifting the green pixel 1 up
     uint16_t pix = (r << 11) | (g << 6) | (b << 0);
     return pix;
-}
-
-
-_Bool player_load_media(player_data_t *ts, uint8_t *temp_buffer){
-    
-    cancel_repeating_timer(&frame_switch_timer);
-
-    uint32_t table_row = ts->current_media_index + 1;
-    uint16_t sector = table_row / (BLOCK_SIZE / TABLE_ROW_WIDTH);
-    uint16_t table_row_index = table_row * TABLE_ROW_WIDTH % BLOCK_SIZE;
-
-    if(!sd_card_read_block(sector, temp_buffer, BLOCK_SIZE)){
-        return false;
-    }
-
-    ts->media_address = *(uint32_t *)&temp_buffer[table_row_index + MEDIA_SECTOR_ADDR_INDEX];
-    ts->num_frames_in_current_media = *(uint32_t *)&temp_buffer[table_row_index + N_FRAMES_INDEX];
-    ts->frame_duration_ms = *(uint16_t *)&temp_buffer[table_row_index + FRAME_TIME_INDEX];
-
-    char media_type_char = *(char *)&temp_buffer[table_row_index + MEDIA_TYPE_INDEX];
-    switch(media_type_char){
-        case 'i':
-            ts->current_media_type = IMAGE;
-            break;
-        case 'v':
-            ts->current_media_type = VIDEO;
-            add_repeating_timer_ms(ts->frame_duration_ms, frame_switch_cb, NULL, 
-                                   &frame_switch_timer);
-            break;
-        case 't':
-            ts->current_media_type = TEXT;
-            add_repeating_timer_ms(1000 / TEXT_SCROLLING_PIXELS_PER_SECOND, frame_switch_cb, NULL, 
-                                   &frame_switch_timer);
-            break;
-    }
-
-    ts->current_frame_num = 0;
-
-    return true;
-}
-
-_Bool player_get_frame(player_data_t *ts, uint8_t *frame_buffer){
-    if(!sd_card_read_blocks(ts->media_address + (ts->current_frame_num * SECTORS_PER_FRAME), 
-                            SECTORS_PER_FRAME, frame_buffer)){
-        return false;
-    }
-
-    ts->current_frame_num = ts->current_frame_num + 1;
-    if(ts->current_frame_num == ts->num_frames_in_current_media){
-        ts->current_frame_num = 0;
-    }
-
-    return true;
 }
 
 _Bool mode_switched(player_data_t *ts){

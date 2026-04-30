@@ -1,4 +1,4 @@
-// HUB75/HUB75E Driver: Lightwork Edition
+// HUB75/HUB75E Driver: Overblinking Edition
 // Uses 4 DMA channels and a PIO block for CPU-free refresh
 // Takes RGB565 input and lightmaps to RGB888
 
@@ -46,7 +46,7 @@ void hub75_configure();
 void hub75_set_refresh_cb(void (*callback)());
 uint16_t *hub75_get_back_buffer();
 void hub75_load_image();
-void hub75_set_pixel(uint8_t x, uint8_t y, uint16_t rgb565);
+void hub75_set_pixel(int16_t x, int16_t y, uint16_t rgb565);
 void hub75_set_brightness(uint8_t b);
 void hub75_update();
 
@@ -79,11 +79,10 @@ void hub75_load_image(uint16_t * image_pointer){
     memcpy(back_buffer, image_pointer, WIDTH * HEIGHT * 2);
 }
 
-void hub75_set_pixel(uint8_t x, uint8_t y, uint16_t rgb565){
+void hub75_set_pixel(int16_t x, int16_t y, uint16_t rgb565){
     if((x >= 0) && (y >= 0) && (x < WIDTH) && (y < HEIGHT)){
         back_buffer[y * WIDTH + x] = rgb565;
     }
-    
 }
 
 void hub75_set_brightness(uint8_t b){
