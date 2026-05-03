@@ -6,16 +6,28 @@ from image_proc import *
 
 # ------------------- User Parameters ---------------------
 
+# Folder where your slideshow media is located
 media_dir = r"media_slideshow"
+
+# Where to save the file to flash on your SD card
 sd_file = r"raw/media.bin"
 
+# Dimensions of your LED matrix
 width, height = 64, 64
+
+# How many seconds between switching media in slideshow mode
 switch_interval = 10
+
+# Whether to stretch out images to fill the square frame
 stretch = True
+
+# Whether to shuffle media in slideshow mode
 randomize = True
 
+# If enabled, you can use your mode switch to force the
+# player to stay on the specified image
 use_static_mode = True
-static_mode_image = "media_static/happy.gif"
+static_mode_image = r"media_static/happy.gif"
 
 # ---------------------------------------------------------
 

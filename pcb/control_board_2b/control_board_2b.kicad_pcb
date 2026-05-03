@@ -79,7 +79,7 @@
 			(mirror no)
 			(drillshape 0)
 			(scaleselection 1)
-			(outputdirectory "C:/Users/pluh/Documents/2026Spring/EECE598/pcb/control_board_1/gerbers/")
+			(outputdirectory "gerbers/")
 		)
 	)
 	(net 0 "")
@@ -631,7 +631,7 @@
 				(type default)
 			)
 			(layer "F.SilkS")
-			(uuid "5ccc1a26-3c0d-4990-b939-fe3c4b05005b")
+			(uuid "9cfdc1db-df5c-4f36-bad5-c609ff4fad9c")
 		)
 		(fp_line
 			(start -7.62 5.08)
@@ -641,7 +641,7 @@
 				(type default)
 			)
 			(layer "F.SilkS")
-			(uuid "e291bb72-7201-4ed5-999f-9172750c6b14")
+			(uuid "79b41b19-7607-4187-8670-c27af02d448d")
 		)
 		(fp_line
 			(start 7.62 5.08)
@@ -651,7 +651,7 @@
 				(type default)
 			)
 			(layer "F.SilkS")
-			(uuid "b60d01b8-173e-4446-b3e0-44d1400a6cee")
+			(uuid "e9cdea83-6e84-44ea-8fa6-ba7e16fad50e")
 		)
 		(fp_line
 			(start 7.62 5.08)
@@ -661,7 +661,18 @@
 				(type default)
 			)
 			(layer "F.SilkS")
-			(uuid "e80cadd1-a57b-4dcf-abdb-5fe74d2842e6")
+			(uuid "7228f2f9-b433-405c-8ab0-fd1aac50dd17")
+		)
+		(fp_rect
+			(start -8.89 -10.16)
+			(end 11.43 10.16)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(fill no)
+			(layer "F.SilkS")
+			(uuid "2b0b98a5-7065-410f-9986-f63eac16d169")
 		)
 		(fp_arc
 			(start 7.62 -7.62)
@@ -672,7 +683,7 @@
 				(type default)
 			)
 			(layer "F.SilkS")
-			(uuid "7b77e03e-5b98-441b-bc7d-df2b55e3b2fb")
+			(uuid "12ac2b73-47c0-4780-b558-5ea5d2c54c31")
 		)
 		(fp_rect
 			(start -8.89 -10.16)
@@ -683,7 +694,7 @@
 			)
 			(fill no)
 			(layer "F.CrtYd")
-			(uuid "0640a1fd-d762-474b-a240-0de2d402d3e8")
+			(uuid "2300860d-0af8-494e-8284-bb9a6a0ea0f2")
 		)
 		(fp_text user "${REFERENCE}"
 			(at 0 2.54 0)
