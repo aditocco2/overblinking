@@ -1,5 +1,7 @@
 # Overblinking: The LED Matrix Graduation Cap
 
+_lightslop taken to its logical extreme_
+
 A DIY graduation cap project that shows a slideshow of pictures, GIFs, videos, and scrolling text messages on a 64x64 LED matrix.
 
 Includes a high-performance LED matrix driver, a custom 3D printed mounting system, and a custom PCB.
@@ -16,6 +18,7 @@ Includes a high-performance LED matrix driver, a custom 3D printed mounting syst
 - Optional rain resistance using an acrylic sheet and 3D printed waterproofing shield
 - Automatically initializes/recovers SD cards and survives card swaps
 - Only required electronics skill for assembly is through-hole soldering
+- Non-destructive design allows you to re-use components for other things post-ceremony (unlike the cap and gown themselves!)
 
 ## Build Your Own
-For instructions on how to make your own LED matrix graduation cap, read the full guide [here](https://overblinking.substack.com/guide)!
+For instructions on how to make your own LED matrix graduation cap, read the full guide [here](https://overblinking.substack.com)!
